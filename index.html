@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Coconut Circuit — 3rd Person Kart (Standalone)</title>
+<title>Coconut Circuit — 3rd-Person Kart (Full)</title>
 <style>
   html,body{height:100%;margin:0;background:#cfeefd;display:flex;align-items:center;justify-content:center;font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
-  .container{width:1100px;max-width:98vw;background:#fff;border-radius:12px;box-shadow:0 12px 40px rgba(2,6,23,0.18);overflow:hidden}
+  .container{width:1150px;max-width:98vw;background:#fff;border-radius:12px;box-shadow:0 12px 40px rgba(2,6,23,0.18);overflow:hidden}
   header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #eee}
   header h1{margin:0;font-size:18px}
-  .content{display:grid;grid-template-columns:1fr 340px;gap:14px;padding:14px}
-  #game{width:100%;height:640px;background:linear-gradient(#f7eacb,#ffe);display:block;border-radius:8px}
+  .content{display:grid;grid-template-columns:1fr 360px;gap:14px;padding:14px}
+  #game{width:100%;height:700px;background:linear-gradient(#f7eacb,#ffe);display:block;border-radius:8px}
   .panel{background:linear-gradient(180deg,#fff,#fafafa);padding:12px;border-radius:10px;box-shadow:0 6px 18px rgba(2,6,23,0.03)}
   .stat{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,monospace}
   button{padding:8px 12px;border-radius:8px;border:0;background:#0ea5e9;color:#fff;cursor:pointer}
@@ -18,18 +18,22 @@
   .muted{color:#9aa4b2}
   footer{padding:10px 14px;border-top:1px solid #eee;font-size:13px}
   .row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .miniturboBar{height:14px;border-radius:8px;background:#1111;overflow:hidden}
+  .mtFill{height:100%;width:0%;background:linear-gradient(90deg,#3ab7ff,#ffb86b);transition:width 80ms linear}
+  .mtLabel{font-weight:700;font-size:13px;margin-top:6px}
+  .itemBox{width:42px;height:28px;border-radius:6px;background:linear-gradient(180deg,#fff,#eee);display:flex;align-items:center;justify-content:center;border:2px solid #c9b27a}
 </style>
 </head>
 <body>
   <div class="container" id="app">
     <header>
-      <h1>Coconut Circuit — 3rd-Person Kart</h1>
-      <div class="small muted">WASD / Arrows • Space drift • E trick • X glider</div>
+      <h1>Coconut Circuit — 3rd-Person Kart (Full)</h1>
+      <div class="small muted">WASD / Arrows • Space drift • E trick • X glider • Q use item</div>
     </header>
 
     <div class="content">
       <div>
-        <canvas id="game" width="1024" height="640"></canvas>
+        <canvas id="game" width="1150" height="700"></canvas>
         <div style="display:flex;gap:8px;margin-top:10px">
           <button id="startBtn">Start Run</button>
           <button id="resetBtn" style="background:#f97316">Reset Position</button>
@@ -44,24 +48,39 @@
           <div class="row"><div class="small">Current Lap</div><div class="stat" id="curLapTime">00:00.000</div></div>
           <div class="row"><div class="small">Total Time</div><div class="stat" id="totalTime">00:00.000</div></div>
           <div class="row"><div class="small">Best (local)</div><div class="stat" id="bestTime">--:--.---</div></div>
+
           <div style="height:1px;background:#eee;margin:10px 0"></div>
+
+          <div class="small">Mini-Turbo</div>
+          <div class="miniturboBar"><div id="mtFill" class="mtFill"></div></div>
+          <div class="mtLabel" id="mtLabel">No Charge</div>
+
+          <div style="height:6px"></div>
+          <div class="small">Item</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div class="itemBox" id="itemBox">—</div>
+            <div class="small muted">Press Q to use</div>
+          </div>
+
+          <div style="height:8px"></div>
           <div class="small">Tips</div>
           <ul style="margin:6px 0 0 18px;padding:0" class="muted">
-            <li>Hold Space to drift through corners — steer while drifting to build mini-turbo.</li>
-            <li>Release Space to get the mini-turbo boost (3 levels).</li>
-            <li>Hit boost panels for instant speed — ramps allow tricks and glider deployment.</li>
+            <li>Hold Space to drift. Release to get a mini-turbo — blue/orange/purple (longer & stronger).</li>
+            <li>Jump ramps let you perform tricks (press E). Land cleanly to get trick boost.</li>
+            <li>Glider (X) can be deployed when high enough after a big ramp; it gives air control and soft landing.</li>
+            <li>Use items (Q) to hinder AI or get bursts.</li>
           </ul>
         </div>
 
         <div class="panel small">
           <div style="font-weight:600;margin-bottom:6px">Track / Gameplay</div>
-          <div class="muted">Spline track with inside shortcut. Boost pads, jump ramps, trick boosts, and glider mechanics included.</div>
+          <div class="muted">3rd-person behind-camera, boost panels, jump ramps, items, trick boosts, glider, and AI racers included.</div>
         </div>
       </aside>
     </div>
 
     <footer>
-      <div class="small muted">Standalone HTML — single-player. Tell me if you want sound, more polish, or ghost replays.</div>
+      <div class="small muted">Standalone. If something breaks, tell me the browser console error and I'll patch it. Want sound next?</div>
     </footer>
   </div>
 
@@ -71,62 +90,55 @@
   // CONFIG (tweak here)
   // -----------------------
   const CONFIG = {
-    canvasW: 1024, canvasH: 640,
+    canvasW: 1150, canvasH: 700,
     laps: 3,
     car: {
-      maxSpeed: 420,     // px/sec
-      accel: 800,        // px/sec^2
-      brake: 1200,
-      reverseMax: -120,
-      turnSpeed: 3.6,    // radians/sec base
-      driftTurnBoost: 1.6, // extra turning while drifting
-      driftFriction: 0.92, // slowdown multiplier while drifting
-      driftChargeRate: 1.0, // charge units per second
+      mass: 120,           // for more realistic acceleration forces
+      maxSpeed: 520,      // px/sec
+      accelForce: 2200,   // force units -> acceleration = force / mass
+      brakeForce: 4200,
+      reverseMax: -160,
+      baseTurnDeg: 160,   // degrees/sec max baseline (converted later)
+      grip: 10.0,         // lateral grip coefficient
+      driftGrip: 2.0,     // grip while drifting (lower means slide more)
+      driftChargeRate: 1.15, // units/sec charging
       miniTurboLevels: 3,
-      miniTurboMultipliers: [1.12, 1.22, 1.35], // per-level speed multipliers
-      miniTurboDuration: [0.7, 0.9, 1.2], // seconds
-      trickBoost: 1.15, // multiplier to apply on landing after trick
-      gliderAirDrag: 0.992, // in-air drag when gliding
-      jumpThresholdSpeed: 260 // speed at which you can get glider after ramp
+      // per-level: multiplier and duration (seconds)
+      miniTurbo: [
+        { color: '#3ab7ff', label: 'Blue', multiplier: 1.12, duration: 0.8 },    // short
+        { color: '#ffb86b', label: 'Orange', multiplier: 1.22, duration: 1.1 },  // medium
+        { color: '#b197ff', label: 'Purple', multiplier: 1.38, duration: 1.4 }   // long
+      ],
+      trickBoostMult: 1.18,
+      gliderDrag: 0.994,
+      jumpMinSpeed: 240,    // speed to be able to get glider after big ramp
     },
-    boostPad: {
-      power: 220, // added velocity (instant)
-      length: 60  // visual length
-    },
-    ramp: {
-      jumpImpulse: 320, // upward velocity given on ramp
-      trickWindow: 1.6, // seconds in air allowed to trick
-      minGliderHeight: 40 // px altitude required to deploy glider
-    },
-    physics: {
-      gravity: 900 // px/sec^2 (vertical)
-    }
+    boostPad: { power: 260, length: 64 }, // power is extra speed added instantly
+    ramp: { indexRatio: 0.58, impulseBase: 360, minGliderHeight: 48 }, // ramp position and impulse
+    physics: { gravity: 900 },
+    aiCount: 3,
+    itemBoxes: { indicesRatio: [0.13, 0.36, 0.74], spawnRadius: 28 },
+    randomSeed: 42
   };
 
   // -----------------------
-  // Utility helpers
+  // Utils
   // -----------------------
   function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
   function lerp(a,b,t){ return a + (b-a)*t; }
   function now(){ return performance.now(); }
-
+  function rand(n=1){ return Math.random()*n; }
   // format seconds to mm:ss.mmm
-  function fmtTime(sec){
-    if(!sec) sec = 0;
-    const m = Math.floor(sec/60);
-    const s = sec - m*60;
-    return `${String(m).padStart(2,'0')}:${s.toFixed(3).padStart(6,'0')}`;
-  }
+  function fmtTime(sec){ if(!sec) sec = 0; const m = Math.floor(sec/60); const s = sec - m*60; return `${String(m).padStart(2,'0')}:${s.toFixed(3).padStart(6,'0')}`; }
 
   // -----------------------
-  // Canvas + main vars
+  // Canvas + UI
   // -----------------------
   const canvas = document.getElementById('game');
   canvas.width = CONFIG.canvasW;
   canvas.height = CONFIG.canvasH;
   const ctx = canvas.getContext('2d');
 
-  // UI elements
   const lapCounterEl = document.getElementById('lapCounter');
   const curLapTimeEl = document.getElementById('curLapTime');
   const totalTimeEl = document.getElementById('totalTime');
@@ -134,39 +146,37 @@
   const startBtn = document.getElementById('startBtn');
   const resetBtn = document.getElementById('resetBtn');
   const clearBestBtn = document.getElementById('clearBest');
+  const mtFill = document.getElementById('mtFill');
+  const mtLabel = document.getElementById('mtLabel');
+  const itemBoxEl = document.getElementById('itemBox');
 
   // -----------------------
-  // Track: spline-based centerline with width
-  // We'll define a series of control points and use Catmull-Rom
+  // Track generation (spline centerline -> rails)
   // -----------------------
   const centerX = canvas.width/2, centerY = canvas.height/2;
-
-  // control points make a loop; varies radius for interesting turns; includes shortcut entry/exit markers
   const ctrl = [
-    {x: centerX + 360, y: centerY, type:'normal'},
-    {x: centerX + 240, y: centerY - 160, type:'normal'},
-    {x: centerX + 20,  y: centerY - 220, type:'normal'},
-    {x: centerX - 240, y: centerY - 160, type:'normal'},
-    {x: centerX - 340, y: centerY + 20,  type:'normal'},
-    {x: centerX - 230, y: centerY + 220, type:'ramp'},    // ramp: rising jump
-    {x: centerX - 30,  y: centerY + 260, type:'normal'},
-    {x: centerX + 160, y: centerY + 220, type:'boost'},   // boost pad area
-    {x: centerX + 320, y: centerY + 80,  type:'normal'},
-    // shortcut inner arc (we'll create a small cut between two points)
+    {x: centerX + 420, y: centerY, type:'normal'},
+    {x: centerX + 260, y: centerY - 190, type:'normal'},
+    {x: centerX + 40,  y: centerY - 270, type:'normal'},
+    {x: centerX - 250, y: centerY - 150, type:'normal'},
+    {x: centerX - 360, y: centerY + 30,  type:'normal'},
+    {x: centerX - 220, y: centerY + 250, type:'ramp'},
+    {x: centerX - 20,  y: centerY + 300, type:'normal'},
+    {x: centerX + 160, y: centerY + 240, type:'boost'},
+    {x: centerX + 330, y: centerY + 90,  type:'normal'},
   ];
 
-  // create sample points along spline (centerline)
+  // Catmull-Rom
   function catmullRom(p0,p1,p2,p3,t){
-    // returns a point between p1 and p2
     const t2 = t*t, t3 = t2*t;
-    const x = 0.5 * ( (2*p1.x) + (-p0.x + p2.x)*t + (2*p0.x - 5*p1.x + 4*p2.x - p3.x)*t2 + (-p0.x + 3*p1.x - 3*p2.x + p3.x)*t3 );
-    const y = 0.5 * ( (2*p1.y) + (-p0.y + p2.y)*t + (2*p0.y - 5*p1.y + 4*p2.y - p3.y)*t2 + (-p0.y + 3*p1.y - 3*p2.y + p3.y)*t3 );
-    return {x,y};
+    return {
+      x: 0.5 * ( (2*p1.x) + (-p0.x + p2.x)*t + (2*p0.x - 5*p1.x + 4*p2.x - p3.x)*t2 + (-p0.x + 3*p1.x - 3*p2.x + p3.x)*t3 ),
+      y: 0.5 * ( (2*p1.y) + (-p0.y + p2.y)*t + (2*p0.y - 5*p1.y + 4*p2.y - p3.y)*t2 + (-p0.y + 3*p1.y - 3*p2.y + p3.y)*t3 )
+    };
   }
 
-  // sample the entire loop into many points
   const centerline = [];
-  const samplesPerSegment = 40;
+  const samplesPerSegment = 48;
   for(let i=0;i<ctrl.length;i++){
     const p0 = ctrl[(i-1+ctrl.length)%ctrl.length];
     const p1 = ctrl[i];
@@ -177,75 +187,73 @@
       centerline.push(catmullRom(p0,p1,p2,p3,t));
     }
   }
-  // ensure it's closed loop
-  // compute tangents (direction) and normals and create left/right rails with track width
+
+  // rails, normals
   const track = [];
-  const baseWidth = 120;
+  const baseWidth = 140;
   for(let i=0;i<centerline.length;i++){
     const a = centerline[i];
     const b = centerline[(i+1)%centerline.length];
     const dx = b.x - a.x, dy = b.y - a.y;
     const len = Math.hypot(dx,dy) || 1;
-    const nx = -dy/len, ny = dx/len; // normal
-    const width = baseWidth * (1 + 0.12*Math.sin(i*0.08)); // slight width variation
+    const nx = -dy/len, ny = dx/len;
+    const width = baseWidth * (1 + 0.12*Math.sin(i*0.06));
     track.push({
-      cx: a.x, cy: a.y, nx, ny, leftX: a.x + nx*(width/2), leftY: a.y + ny*(width/2),
+      cx: a.x, cy: a.y, nx, ny,
+      leftX: a.x + nx*(width/2), leftY: a.y + ny*(width/2),
       rightX: a.x - nx*(width/2), rightY: a.y - ny*(width/2),
       width
     });
   }
 
-  // define start/finish index (choose first)
   const sfIndex = 0;
+  const boostPads = CONFIG.itemBoxes.indicesRatio.map(r => ({ index: Math.floor(centerline.length * r), used: false }));
+  const rampIndex = Math.floor(centerline.length * CONFIG.ramp.indexRatio);
+  const shortcut = { entry: Math.floor(centerline.length * 0.92), exit: Math.floor(centerline.length * 0.06) };
 
-  // place boost pads (indices)
-  const boostPads = [
-    { index: Math.floor(centerline.length * 0.2), length: CONFIG.boostPad.length },
-    { index: Math.floor(centerline.length * 0.55), length: CONFIG.boostPad.length }
-  ];
-
-  // define ramp index (the earlier 'ramp' ctrl mapped near indices)
-  const rampIndex = Math.floor(centerline.length * 0.6);
-  const rampRadius = 60; // ramp visual size
-
-  // optional: inner shortcut (a polyline between two indices to shave time)
-  const shortcut = {
-    entry: Math.floor(centerline.length * 0.94),
-    exit: Math.floor(centerline.length * 0.08),
-    active: true
-  };
+  // item boxes (placed at certain indices)
+  const itemBoxes = CONFIG.itemBoxes.indicesRatio.map(r => ({ index: Math.floor(centerline.length * r), taken: false }));
 
   // -----------------------
-  // Player / car state
+  // Player & AI
   // -----------------------
   const player = {
-    // position tracked as (index on centerline as float) and lateral offset (-1..1)
-    trackPos: sfIndex + 1, // floating index along centerline; we'll maintain within [0, len)
-    lateral: 0,            // -1 (left rail) .. 1 (right rail) ; for lane offset
-    speed: 0,              // forward speed (px/sec) along heading tangent
-    angle: 0,              // facing angle in radians
-    yVel: 0,               // vertical velocity (for jumps)
-    altitude: 0,           // y above track (0 on ground)
-    drifting: false,
-    driftCharge: 0,        // 0..some value mapping to levels
-    driftDir: 0,          // -1 left / 1 right
-    miniTurboQueued: 0,    // number of levels stored to apply on release
+    index: sfIndex + 1, // floating index along centerline
+    lateral: 0,         // -1..1 (left..right)
+    speed: 0,
+    angle: 0,
+    altitude: 0,
+    yVel: 0,
     onGround: true,
-    gliderDeployed: false,
+    drifting: false,
+    driftCharge: 0,
+    driftDir: 0,
+    hasItem: null,
+    glider: false,
     trickActive: false,
-    trickReady: false,     // true while in a trick window
-    color: '#ef4444'
+    lastBoostEnd: 0
   };
 
-  // lap / timing state
-  let runActive = false;
-  let lapStartTime = 0;
-  let lapTimes = [];
+  // small AI racers: they follow the centerline index and try to maintain target speed
+  const ais = [];
+  for(let i=0;i<CONFIG.aiCount;i++){
+    ais.push({
+      index: sfIndex + 1 - (i+1) * (centerline.length * 0.06),
+      lateral: (i % 2 === 0 ? -0.2 : 0.2),
+      speed: CONFIG.car.maxSpeed * 0.72,
+      color: i===0 ? '#ffd166' : i===1 ? '#6ee7b7' : '#a78bfa',
+      aiState: {}
+    });
+  }
+
+  // load best
   let bestRecord = null;
-  try{ bestRecord = JSON.parse(localStorage.getItem('coconut_best_3p')); }catch(e){ bestRecord = null; }
+  try{ bestRecord = JSON.parse(localStorage.getItem('coconut_best_3p_v2')); }catch(e){ bestRecord = null; }
   if(bestRecord) bestTimeEl.textContent = fmtTime(bestRecord.total);
 
-  // input state
+  // -----------------------
+  // Input
+  // -----------------------
   const keys = {};
   window.addEventListener('keydown', e => {
     keys[e.key.toLowerCase()] = true;
@@ -253,465 +261,151 @@
   });
   window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 
-  // utility: get centerline point (with wrapping)
-  function getCenter(idx){
-    const L = centerline.length;
-    while(idx < 0) idx += L;
-    idx = idx % L;
-    const i = Math.floor(idx);
-    const t = idx - i;
-    const a = centerline[i];
-    const b = centerline[(i+1) % L];
-    return { x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t), i, t };
+  // -----------------------
+  // Particles & small helpers
+  // -----------------------
+  const particles = [];
+  function spawnParticle(x,y,vx,vy,life,color,size=3){ particles.push({x,y,vx,vy,life,age:0,color,size}); }
+  function updateParticles(dt){
+    for(let i=particles.length-1;i>=0;i--){
+      const p = particles[i];
+      p.age += dt;
+      if(p.age >= p.life) particles.splice(i,1);
+      else { p.x += p.vx * dt; p.y += p.vy * dt; }
+    }
   }
 
-  // compute world position of player given trackPos and lateral offset
+  // -----------------------
+  // Camera: third-person behind-the-car
+  // We'll use a transform: translate to screen center, then rotate world opposite to player.angle,
+  // then draw world so the camera sits behind the car. This gives a true behind-the-car feel.
+  // -----------------------
+  const camera = { x:0, y:0, zoom:1 };
+  function worldToScreen(wx, wy, alt=0){
+    // Apply camera transform (after we've already applied ctx transform in render)
+    // Here we'll compute screen coords manually for elements needing absolute positioning (HUD/particles)
+    const sx = (canvas.width/2) + (wx - camera.x) * camera.zoom;
+    const sy = (canvas.height/2) + (wy - camera.y) * camera.zoom - alt * camera.zoom * 0.35;
+    return { x: sx, y: sy };
+  }
+
+  // -----------------------
+  // Racing state
+  // -----------------------
+  let runActive = false;
+  let lapStartTime = 0;
+  let lapTimes = [];
+
+  // -----------------------
+  // Physics helpers: get centerline sample / tangent length
+  // -----------------------
+  function wrapIndex(idx){
+    const L = centerline.length;
+    while(idx < 0) idx += L;
+    return idx % L;
+  }
+  function getCenterFloat(idx){
+    const L = centerline.length;
+    // handle negative
+    const wrapped = (idx % L + L) % L;
+    const i = Math.floor(wrapped);
+    const t = wrapped - i;
+    const a = centerline[i];
+    const b = centerline[(i+1)%L];
+    return { x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t), i, t };
+  }
+  function tangentLengthAt(idx){
+    const a = getCenterFloat(idx);
+    const b = getCenterFloat(idx + 1);
+    return Math.hypot(b.x - a.x, b.y - a.y) || 1;
+  }
   function playerWorldPos(){
     const L = track.length;
-    const idx = (player.trackPos % L + L) % L;
+    const idx = wrapIndex(player.index);
     const i = Math.floor(idx);
     const t = idx - i;
-    const a = track[i];
-    const b = track[(i+1)%L];
+    const a = track[i], b = track[(i+1)%L];
     const cx = lerp(a.cx, b.cx, t);
     const cy = lerp(a.cy, b.cy, t);
     const nx = lerp(a.nx, b.nx, t);
     const ny = lerp(a.ny, b.ny, t);
     const width = lerp(a.width, b.width, t);
-    const lateralPx = player.lateral * (width/2 - 10); // keep slightly inset
+    const lateralPx = player.lateral * (width/2 - 12);
     return { x: cx + nx * lateralPx, y: cy + ny * lateralPx, nx, ny, width };
   }
 
-  // -----------------------
-  // Camera (3rd-person behind)
-  // We'll implement a simple world-to-screen transform by translating and scaling
-  // based on a camera position slightly behind and above the player.
-  // -----------------------
-  const camera = { x:0, y:0, zoom:1, angle:0, shake:0 };
-
-  function worldToScreen(wx, wy, alt=0){
-    // convert world coords to canvas screen: translate by camera, scale, and apply a small perspective (higher altitude -> smaller scale)
-    const dx = wx - camera.x;
-    const dy = wy - camera.y;
-    const sx = (canvas.width/2) + (dx) * camera.zoom;
-    const sy = (canvas.height/2) + (dy) * camera.zoom - alt * (0.35 * camera.zoom);
-    return {x: sx, y: sy};
+  function aiWorldPos(ai){
+    const L = track.length;
+    const idx = wrapIndex(ai.index);
+    const i = Math.floor(idx);
+    const t = idx - i;
+    const a = track[i], b = track[(i+1)%L];
+    const cx = lerp(a.cx, b.cx, t);
+    const cy = lerp(a.cy, b.cy, t);
+    const nx = lerp(a.nx, b.nx, t);
+    const ny = lerp(a.ny, b.ny, t);
+    const width = lerp(a.width, b.width, t);
+    const lateralPx = ai.lateral * (width/2 - 12);
+    return { x: cx + nx * lateralPx, y: cy + ny * lateralPx };
   }
 
   // -----------------------
-  // Particles (for boost/drift)
+  // Item system
   // -----------------------
-  const particles = [];
-  function spawnParticle(x,y,vx,vy,life,color,size=3){
-    particles.push({x,y,vx,vy,life,age:0,color,size});
+  const ITEM_POOL = ['banana','mushroom','boostBox','shell']; // simple pool
+  function giveRandomItem(target){
+    const it = ITEM_POOL[Math.floor(rand(ITEM_POOL.length))];
+    target.hasItem = it;
+    if(target === player) itemBoxEl.textContent = it[0].toUpperCase();
   }
 
-  // -----------------------
-  // Main physics + update
-  // -----------------------
-  let lastTs = 0;
-  function gameUpdate(ts){
-    if(!lastTs) lastTs = ts;
-    const dt = Math.min(0.033, (ts - lastTs) / 1000); // cap dt
-    lastTs = ts;
-
-    // --- input mapping ---
-    const forward = keys['w'] || keys['arrowup'] || false;
-    const backward = keys['s'] || keys['arrowdown'] || false;
-    const left = keys['a'] || keys['arrowleft'] || false;
-    const right = keys['d'] || keys['arrowright'] || false;
-    const drift = keys[' '] || false; // space
-    const trick = keys['e'] || false;
-    const gliderKey = keys['x'] || false;
-
-    // apply acceleration / braking
-    if(forward){
-      player.speed = clamp(player.speed + CONFIG.car.accel * dt, CONFIG.car.reverseMax, CONFIG.car.maxSpeed);
-    } else if(backward){
-      player.speed = clamp(player.speed - CONFIG.car.brake * dt, CONFIG.car.reverseMax, CONFIG.car.maxSpeed);
-    } else {
-      // natural friction when not accelerating
-      player.speed *= Math.pow(0.96, dt * 60);
-      if(Math.abs(player.speed) < 6) player.speed = 0;
-    }
-
-    // turning
-    // turning effectiveness based on speed (less turn at high speed), but drifting changes turn
-    const speedFactor = clamp(Math.abs(player.speed) / CONFIG.car.maxSpeed, 0, 1);
-    let turnBase = CONFIG.car.turnSpeed * (0.4 + 0.6 * (1 - speedFactor));
-    if(player.drifting){
-      turnBase *= CONFIG.car.driftTurnBoost;
-    }
-    if(left) player.angle -= turnBase * dt * (player.speed >= 0 ? 1 : -1);
-    if(right) player.angle += turnBase * dt * (player.speed >= 0 ? 1 : -1);
-
-    // drifting behavior
-    if(drift && Math.abs(player.speed) > 40){
-      if(!player.drifting){
-        player.drifting = true;
-        player.driftDir = left ? -1 : (right ? 1 : player.driftDir || 1);
+  // use item
+  function usePlayerItem(){
+    if(!player.hasItem) return;
+    const it = player.hasItem;
+    player.hasItem = null;
+    itemBoxEl.textContent = '—';
+    if(it === 'banana'){
+      // drop banana at player's position: mark an obstacle on track (simple array)
+      droppedBananas.push({ x: playerWorldPos().x, y: playerWorldPos().y, radius: 14, life: 14 });
+      flashMsg('Banana! (dropped)', '#fbbf24', 800);
+    } else if(it === 'mushroom'){
+      // turbo burst
+      player.speed = Math.min(player.speed + 320, CONFIG.car.maxSpeed * 1.6);
+      flashMsg('Mushroom! Turbo', '#ffb86b', 900);
+    } else if(it === 'boostBox'){
+      // give everyone a small boost (including player)
+      player.speed = Math.min(player.speed + 220, CONFIG.car.maxSpeed * 1.6);
+      ais.forEach(a=> a.speed = Math.min(a.speed + 160, CONFIG.car.maxSpeed * 1.3));
+      flashMsg('Speed field!', '#8be9ff', 800);
+    } else if(it === 'shell'){
+      // target the nearest AI in front and slow them
+      let target = null, bestd = Infinity;
+      const ppos = playerWorldPos();
+      for(const a of ais){
+        const apos = aiWorldPos(a);
+        // only consider those ahead along track (index difference positive small)
+        const d = Math.hypot(apos.x - ppos.x, apos.y - ppos.y);
+        if(d < bestd){ bestd = d; target = a; }
       }
-      // charge drift
-      player.driftCharge += CONFIG.car.driftChargeRate * dt;
-      // spawn drift sparks
-      const wp = playerWorldPos();
-      const s = worldToScreen(wp.x, wp.y);
-      for(let p=0;p<3;p++){
-        const angle = player.angle + (Math.PI/2)* (Math.random()*2 -1);
-        const v = 50 + Math.random()*80;
-        spawnParticle(s.x + (Math.random()-0.5)*6, s.y + (Math.random()-0.5)*6, Math.cos(angle)*v*0.03, Math.sin(angle)*v*0.03, 0.5 + Math.random()*0.4, 'rgba(255,200,80,0.8)', 2);
-      }
-    } else {
-      // if drift released, convert charge to mini-turbo levels
-      if(player.drifting){
-        // map driftCharge to levels (0..max)
-        const totalCharge = player.driftCharge;
-        const level = clamp(Math.floor(totalCharge / 0.8), 0, CONFIG.car.miniTurboLevels);
-        player.miniTurboQueued = level;
-        player.driftCharge = 0;
-        if(level > 0){
-          // apply mini turbo: increase speed multiplier for short time
-          const mult = CONFIG.car.miniTurboMultipliers[Math.max(0, level-1)];
-          const dur = CONFIG.car.miniTurboDuration[Math.max(0, level-1)];
-          // immediate speed burst
-          player.speed *= mult;
-          // small particles & flash
-          flashMsg(`Mini-Turbo x${level}`, '#ffd166', 900);
-          // schedule gradual decay (we just rely on friction after)
-        }
-      }
-      player.drifting = false;
+      if(target){
+        target.speed = Math.max(80, target.speed - 220);
+        flashMsg('Shell hit an AI!', '#ef4444', 800);
+      } else flashMsg('No target', '#9aa4b2', 600);
     }
-
-    // update position: integrate along centerline using current speed
-    // We treat speed as px/sec along tangent; we find local tangent length to convert to index increment
-    // approximate by sampling small forward distance
-    const currentIndex = player.trackPos;
-    const a = getCenter(currentIndex);
-    const b = getCenter(currentIndex + 1);
-    const tangentLen = Math.hypot(b.x - a.x, b.y - a.y) || 1;
-    // convert player.speed (px/sec) to index/sec: speed / tangentLen
-    const idxDelta = (player.speed * dt) / tangentLen;
-    player.trackPos += idxDelta;
-
-    // lateral steering (player.lateral moves slowly towards desired lane)
-    // desired lateral depends on steering when turning and also if drifting
-    let lateralTarget = 0;
-    if(player.drifting){
-      lateralTarget = player.driftDir * 0.8; // drift pushes player outward a bit
-    } else {
-      // gentle centering
-      if(left) lateralTarget = -0.35;
-      if(right) lateralTarget = 0.35;
-    }
-    // lerp lateral towards target
-    player.lateral = lerp(player.lateral, lateralTarget, clamp(3*dt, 0, 1));
-
-    // world pos and altitude handling (jump ramps)
-    // check if over ramp region: if near ramp index and going forward, add vertical impulse if crossing ramp
-    const rampCrossThreshold = 1.2;
-    const prevIdx = currentIndex - idxDelta;
-    // detect crossing ramp index between prev and current
-    function between(a,b,c){ return (a<=c && c<b) || (b<=c && c<a); }
-    if(between(prevIdx, player.trackPos, rampIndex) && player.onGround && player.speed > 120){
-      // apply jump impulse
-      player.yVel = CONFIG.ramp.jumpImpulse * (player.speed / CONFIG.car.maxSpeed);
-      player.onGround = false;
-      player.altitude = 2; // small initial offset
-    }
-
-    // vertical integration
-    if(!player.onGround){
-      // gravity applies
-      player.yVel -= CONFIG.physics.gravity * dt;
-      player.altitude += player.yVel * dt;
-      // in-air horizontal slowdown slightly
-      player.speed *= player.gliderDeployed ? CONFIG.car.gliderAirDrag : 0.998;
-      // trick: if E pressed and within trick window, toggle a trick
-      if(trick && Math.abs(player.yVel) > 30 && !player.trickActive && Math.abs(player.altitude) > 5){
-        player.trickActive = true;
-        player.trickReady = true;
-        // spawn trick particles
-        flashMsg('Trick!', '#ff7ab6', 600);
-      }
-      // glider deploy
-      if(gliderKey && !player.gliderDeployed && Math.abs(player.altitude) > CONFIG.ramp.minGliderHeight && player.yVel < 0 && Math.abs(player.yVel) > 60){
-        player.gliderDeployed = true;
-        flashMsg('Glider deployed', '#7dd3fc', 900);
-      }
-      // landing detection
-      if(player.altitude <= 0){
-        // landed
-        player.altitude = 0;
-        player.yVel = 0;
-        player.onGround = true;
-        // if trickActive -> give trick boost and reset
-        if(player.trickActive && player.trickReady){
-          player.speed *= CONFIG.car.trickBoost;
-          flashMsg('Trick Boost!', '#ffd166', 900);
-        }
-        player.trickActive = false;
-        player.trickReady = false;
-        player.gliderDeployed = false;
-      }
-    }
-
-    // detect boost pads (if world pos near any pad centerline position)
-    const wp = playerWorldPos();
-    for(const pad of boostPads){
-      const c = getCenter(pad.index);
-      const dist = Math.hypot(wp.x - c.x, wp.y - c.y);
-      if(dist < 48 && player.onGround){
-        // apply boost once per crossing: simplest way is to check a small flag? We'll just apply boost and spawn particles (could be re-applied repeatedly if you stay on pad, but that's fine)
-        player.speed = Math.min(player.speed + CONFIG.boostPad.power, CONFIG.car.maxSpeed * 1.8);
-        for(let i=0;i<10;i++) spawnParticle(wp.x + (Math.random()-0.5)*40, wp.y + (Math.random()-0.5)*40, (Math.random()-0.5)*60, (Math.random()-0.5)*20, 0.6, 'rgba(120,200,255,0.9)', 3);
-        flashMsg('Boost!', '#8be9ff', 500);
-      }
-    }
-
-    // lap detection: crossing start/finish line in forward direction
-    // simple: detect if we passed sfIndex since previous pos
-    const L = centerline.length;
-    const prevWrapped = ((prevIdx % L) + L) % L;
-    const curWrapped = ((player.trackPos % L) + L) % L;
-    if(!runActive && runActive === false){} // just for clarity
-    if(runActive){
-      // if crossing sfIndex (i.e., prev < sf <= cur in modular sense)
-      const crossed = (prevWrapped < sfIndex && curWrapped >= sfIndex) || (prevWrapped > curWrapped && (sfIndex >= prevWrapped || sfIndex <= curWrapped));
-      if(crossed){
-        const nowMs = now();
-        const lapSec = (nowMs - lapStartTime) / 1000;
-        lapTimes.push(lapSec);
-        lapStartTime = nowMs;
-        lapCounterEl.textContent = `${lapTimes.length} / ${CONFIG.laps}`;
-        if(lapTimes.length >= CONFIG.laps){
-          // finish run
-          runActive = false;
-          startBtn.textContent = 'Start Run';
-          // compute total
-          const total = lapTimes.reduce((a,b)=>a+b,0);
-          totalTimeEl.textContent = fmtTime(total);
-          // best check
-          if(!bestRecord || total < bestRecord.total){
-            bestRecord = { total, date: (new Date()).toISOString() };
-            try{ localStorage.setItem('coconut_best_3p', JSON.stringify(bestRecord)); }catch(e){}
-            bestTimeEl.textContent = fmtTime(bestRecord.total);
-            flashMsg('New Personal Best!', '#16a34a', 1200);
-          }
-        } else {
-          flashMsg(`Lap ${lapTimes.length}`, '#f97316', 650);
-        }
-      }
-    }
-
-    // update UI for current lap
-    if(runActive){
-      const nowMs = now();
-      const curLap = (nowMs - lapStartTime) / 1000;
-      curLapTimeEl.textContent = fmtTime(curLap);
-      const total = lapTimes.reduce((a,b)=>a+b,0) + curLap;
-      totalTimeEl.textContent = fmtTime(total);
-    } else {
-      // show current lap as 0 or last time
-    }
-
-    // update particles
-    for(let i=particles.length-1;i>=0;i--){
-      const p = particles[i];
-      p.age += dt;
-      if(p.age >= p.life) particles.splice(i,1);
-      else {
-        p.x += p.vx * dt * 60;
-        p.y += p.vy * dt * 60;
-      }
-    }
-
-    // update camera: place behind the kart with smoothing
-    const wp2 = playerWorldPos();
-    const camTargetX = wp2.x - Math.cos(player.angle) * 140;
-    const camTargetY = wp2.y - Math.sin(player.angle) * 120 - Math.max(0, player.altitude) * 0.4;
-    camera.x = lerp(camera.x, camTargetX, clamp(6*dt,0,1));
-    camera.y = lerp(camera.y, camTargetY, clamp(6*dt,0,1));
-    camera.zoom = lerp(camera.zoom, 1.02 - 0.1 * clamp(Math.abs(player.speed)/CONFIG.car.maxSpeed,0,1), clamp(2*dt,0,1));
-
-    // render
-    renderScene();
-
-    // schedule next
-    requestAnimationFrame(gameUpdate);
   }
 
+  const droppedBananas = [];
+
   // -----------------------
-  // Rendering
+  // MiniTurbo visuals & logic
   // -----------------------
-  function renderScene(){
-    // clear
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+  let mtState = { charge: 0, level: 0, activeUntil: 0 };
 
-    // background gradient
-    const grd = ctx.createLinearGradient(0,0,0,canvas.height);
-    grd.addColorStop(0,'#f0f6ff'); grd.addColorStop(0.5,'#fff9f0'); grd.addColorStop(1,'#fffdf6');
-    ctx.fillStyle = grd; ctx.fillRect(0,0,canvas.width,canvas.height);
-
-    // draw beach / sea background far away (simple)
-    // draw some ocean at top-left area
-    ctx.save();
-    const oceanScreen = worldToScreen(centerX + 450, centerY - 300, 0);
-    const seaR = 320 * camera.zoom;
-    const grad = ctx.createRadialGradient(oceanScreen.x, oceanScreen.y, 20, oceanScreen.x, oceanScreen.y, seaR);
-    grad.addColorStop(0,'#9de7ff'); grad.addColorStop(1,'rgba(0,140,200,0.05)');
-    ctx.fillStyle = grad; ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.restore();
-
-    // draw track surface: draw polygons between left and right rails
-    ctx.save();
-    // draw track outer fill by sampling segments around camera for performance (but we can draw all)
-    ctx.beginPath();
-    for(let i=0;i<track.length;i++){
-      const p = track[i];
-      const s = worldToScreen(p.leftX, p.leftY);
-      if(i===0) ctx.moveTo(s.x,s.y); else ctx.lineTo(s.x,s.y);
-    }
-    for(let i=track.length-1;i>=0;i--){
-      const p = track[i];
-      const s = worldToScreen(p.rightX, p.rightY);
-      ctx.lineTo(s.x,s.y);
-    }
-    ctx.closePath();
-    ctx.fillStyle = '#f4e0b2'; // sand colored track (beach)
-    ctx.fill();
-    // track border shading
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = '#dfc898';
-    ctx.stroke();
-    ctx.restore();
-
-    // draw boost pads
-    for(const pad of boostPads){
-      const c = getCenter(pad.index);
-      const s = worldToScreen(c.x, c.y);
-      ctx.save();
-      ctx.globalAlpha = 0.95;
-      const padW = 48 * camera.zoom;
-      ctx.beginPath();
-      ctx.roundRect(s.x - padW/2, s.y - 8*camera.zoom, padW, 16*camera.zoom, 6*camera.zoom);
-      ctx.fillStyle = '#8be9ff';
-      ctx.fill();
-      ctx.lineWidth = 2; ctx.strokeStyle = '#5ecce8'; ctx.stroke();
-      ctx.restore();
-    }
-
-    // draw ramp (as a raised strip)
-    {
-      const r = getCenter(rampIndex);
-      const s = worldToScreen(r.x, r.y);
-      ctx.save();
-      ctx.fillStyle = '#d1a26b';
-      ctx.beginPath();
-      ctx.ellipse(s.x, s.y, rampRadius * camera.zoom, 18 * camera.zoom, 0, 0, Math.PI*2);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    // draw centerline ghost (thin)
-    ctx.save();
-    ctx.beginPath();
-    for(let i=0;i<centerline.length;i++){
-      const p = centerline[i];
-      const s = worldToScreen(p.x, p.y);
-      if(i===0) ctx.moveTo(s.x,s.y); else ctx.lineTo(s.x,s.y);
-    }
-    ctx.closePath();
-    ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.stroke();
-    ctx.restore();
-
-    // draw particles
-    for(const p of particles){
-      ctx.beginPath();
-      ctx.fillStyle = p.color;
-      ctx.globalAlpha = clamp(1 - p.age / p.life, 0, 1);
-      ctx.arc(p.x * camera.zoom + (canvas.width/2 - camera.x*camera.zoom), p.y * camera.zoom + (canvas.height/2 - camera.y*camera.zoom), p.size, 0, Math.PI*2);
-      ctx.fill();
-      ctx.globalAlpha = 1;
-    }
-
-    // draw player (3rd person: draw shadow under car, then car with altitude)
-    const wp = playerWorldPos();
-    const screen = worldToScreen(wp.x, wp.y, player.altitude);
-    // shadow
-    ctx.save();
-    const shadowR = 18 * (1 + Math.min(0.9, Math.abs(player.speed)/CONFIG.car.maxSpeed));
-    ctx.beginPath();
-    ctx.ellipse(screen.x, screen.y + 8*camera.zoom, shadowR * camera.zoom, (shadowR*0.45) * camera.zoom, 0, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(0,0,0,0.18)';
-    ctx.fill();
-    ctx.restore();
-
-    // car body - simple rotated rectangle with slight 3D tilt due to altitude
-    ctx.save();
-    ctx.translate(screen.x, screen.y - player.altitude * 0.35);
-    ctx.rotate(player.angle);
-    // body
-    ctx.fillStyle = player.color;
-    roundRect(ctx, -22*camera.zoom, -14*camera.zoom - Math.max(0, player.altitude*0.06), 44*camera.zoom, 28*camera.zoom, 6*camera.zoom, true, true);
-    // windshield
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    roundRect(ctx, -10*camera.zoom, -10*camera.zoom - Math.max(0, player.altitude*0.06), 20*camera.zoom, 12*camera.zoom, 3*camera.zoom, true, false);
-    // drift sparks if drifting
-    if(player.drifting){
-      for(let i=0;i<6;i++){
-        const sx = (-8 + Math.random()*16) * camera.zoom;
-        const sy = (12 + Math.random()*6) * camera.zoom;
-        ctx.fillStyle = `rgba(255,${180+Math.floor(Math.random()*60)},60,${0.6+Math.random()*0.3})`;
-        ctx.fillRect(sx, sy, 2*camera.zoom, 2*camera.zoom);
-      }
-    }
-    ctx.restore();
-
-    // overlay speed/direction HUD (tiny)
-    ctx.save();
-    ctx.fillStyle = '#00000088';
-    ctx.font = '13px Inter, Arial';
-    ctx.fillText(`Speed: ${Math.round(player.speed)}`, 12, 22);
-    ctx.fillText(`Drift: ${player.driftCharge.toFixed(2)}`, 12, 42);
-    ctx.restore();
-
-    // small crosshair at center (for orientation)
-    ctx.save();
-    ctx.strokeStyle = 'rgba(0,0,0,0.12)';
-    ctx.beginPath(); ctx.moveTo(canvas.width/2 - 6, canvas.height/2); ctx.lineTo(canvas.width/2 + 6, canvas.height/2); ctx.moveTo(canvas.width/2, canvas.height/2 - 6); ctx.lineTo(canvas.width/2, canvas.height/2 + 6); ctx.stroke();
-    ctx.restore();
-
-  }
-
-  // small helpers to add rounded rect to context (not built-in in some browsers)
-  CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
-    const min = Math.min(Math.abs(w), Math.abs(h));
-    if (r > min/2) r = min/2;
-    this.beginPath();
-    this.moveTo(x + r, y);
-    this.arcTo(x + w, y, x + w, y + h, r);
-    this.arcTo(x + w, y + h, x, y + h, r);
-    this.arcTo(x, y + h, x, y, r);
-    this.arcTo(x, y, x + w, y, r);
-    this.closePath();
-    return this;
-  };
-
-  function roundRect(ctx,x,y,w,h,r,fill,stroke){
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
-    if(fill) ctx.fill(); if(stroke) ctx.stroke();
-  }
-
-  // small flash message
-  let flashTimer = null;
-  function flashMsg(msg, color='#111', duration=700){
+  // -----------------------
+  // Flash message
+  // -----------------------
+  function flashMsg(msg,color='#111', duration=700){
     const el = document.createElement('div');
     el.textContent = msg;
     el.style.position = 'fixed';
@@ -728,7 +422,479 @@
     setTimeout(()=>el.remove(), duration + 350);
   }
 
-  // Start / Reset / Clear handlers
+  // -----------------------
+  // Main update loop
+  // -----------------------
+  let lastTs = 0;
+  function update(ts){
+    if(!lastTs) lastTs = ts;
+    const dt = Math.min(0.04, (ts - lastTs) / 1000);
+    lastTs = ts;
+
+    // INPUT
+    const forward = keys['w'] || keys['arrowup'] || false;
+    const back = keys['s'] || keys['arrowdown'] || false;
+    const left = keys['a'] || keys['arrowleft'] || false;
+    const right = keys['d'] || keys['arrowright'] || false;
+    const driftKey = keys[' '] || false;
+    const trickKey = keys['e'] || false;
+    const gliderKey = keys['x'] || false;
+    const itemKey = keys['q'] || false;
+
+    // Use item (edge detect)
+    if(itemKey && !prevKeys.q){ usePlayerItem(); }
+    prevKeys.q = !!itemKey;
+
+    // DRIFT logic: charge while holding space and turning
+    if(driftKey && Math.abs(player.speed) > 40 && (left || right)){
+      if(!player.drifting){
+        player.drifting = true;
+        player.driftDir = left ? -1 : 1;
+      }
+      player.driftCharge = Math.min(player.driftCharge + CONFIG.car.driftChargeRate * dt, CONFIG.car.miniTurboLevels * 1.6);
+      // spawn drift sparks
+      const p = playerWorldPos();
+      for(let i=0;i<3;i++){
+        spawnParticle(p.x + (Math.random()-0.5)*8, p.y + (Math.random()-0.5)*6, (Math.random()-0.5)*40 * dt, (Math.random()-0.5)*40 * dt, 0.6, 'rgba(255,200,80,0.9)', 2);
+      }
+    } else {
+      // on release we compute level and apply boost
+      if(player.drifting && player.driftCharge > 0){
+        // map charge to levels (0 = none)
+        const charge = player.driftCharge;
+        let level = 0;
+        if(charge >= 2.2) level = 3;
+        else if(charge >= 1.2) level = 2;
+        else if(charge >= 0.5) level = 1;
+        if(level > 0){
+          const mt = CONFIG.car.miniTurbo[level-1];
+          player.speed = Math.min(player.speed * mt.multiplier, CONFIG.car.maxSpeed * 1.8);
+          mtState.activeUntil = now() + mt.duration*1000;
+          mtState.level = level;
+          flashMsg(`${mt.label} Mini-Turbo!`, mt.color, 900);
+        }
+      }
+      // reset drift state
+      player.drifting = false;
+      player.driftCharge = 0;
+    }
+
+    // update mt visual
+    mtState.charge = player.driftCharge;
+    updateMTUI();
+
+    // ACCEL/BRK via simple force model: acceleration = force / mass
+    let force = 0;
+    if(forward) force += CONFIG.car.accelForce;
+    if(back) force -= CONFIG.car.brakeForce;
+    // convert force to acceleration
+    const accel = force / CONFIG.car.mass;
+    player.speed += accel * dt;
+    // natural drag
+    // heavier drag when on ground turning sharply; less drag in air
+    const drag = player.onGround ? 0.995 : 0.999;
+    player.speed *= drag;
+    // clamp
+    player.speed = clamp(player.speed, CONFIG.car.reverseMax, CONFIG.car.maxSpeed * 1.8);
+
+    // turning: more realistic: curvature reduces with speed and grip; if drifting, reduced grip increases slide
+    const speedRatio = clamp(Math.abs(player.speed) / CONFIG.car.maxSpeed, 0, 1);
+    const baseTurn = (CONFIG.car.baseTurnDeg * Math.PI/180) * (1 - speedRatio*0.6); // rad/sec
+    // when drifting, add extra steer but also reduce lateral grip
+    const effectiveGrip = player.drifting ? CONFIG.car.driftGrip : CONFIG.car.grip;
+    // apply angular change by projecting lateral input into heading change using speed and grip
+    const steerInput = (left ? -1 : 0) + (right ? 1 : 0);
+    // simple turning: angular acceleration scaled by steerInput, baseTurn, and sign of speed
+    player.angle += baseTurn * steerInput * dt * (player.speed >= 0 ? 1 : -1) * (player.drifting ? 1.4 : 1.0);
+
+    // Advance along centerline using speed and tangent length
+    const tLen = tangentLengthAt(player.index);
+    const idxDelta = (player.speed * dt) / tLen;
+    const prevIndex = player.index;
+    player.index = wrapIndex(player.index + idxDelta);
+
+    // lateral adjustment: sliding dynamics
+    const desiredLateral = player.drifting ? player.driftDir * 0.9 : (steerInput * 0.35);
+    player.lateral = lerp(player.lateral, desiredLateral, clamp(3 * dt,0,1));
+
+    // Jump ramp crossing detection
+    const crossedRamp = crossesIndex(prevIndex, player.index, rampIndex);
+    if(crossedRamp && player.onGround && player.speed > 140){
+      // impulse upward proportional to speed
+      player.yVel = CONFIG.ramp.impulseBase * (player.speed / CONFIG.car.maxSpeed);
+      player.onGround = false;
+      player.altitude = 2;
+      player.glider = false;
+      flashMsg('Jump!', '#8be9ff', 600);
+    }
+
+    // Vertical dynamics if airborne
+    if(!player.onGround){
+      player.yVel -= CONFIG.physics.gravity * dt;
+      player.altitude += player.yVel * dt;
+      // slight forward deceleration in air
+      player.speed *= player.glider ? CONFIG.car.gliderDrag : 0.999;
+      // trick detection
+      if(trickKey && !player.trickActive && Math.abs(player.yVel) > 40){
+        player.trickActive = true;
+        flashMsg('Trick!', '#ff7ab6', 600);
+      }
+      // glider deploy
+      if(gliderKey && !player.glider && player.altitude > CONFIG.ramp.minGliderHeight && player.yVel < -60){
+        player.glider = true;
+        flashMsg('Glider deployed', '#7dd3fc', 900);
+      }
+      // land
+      if(player.altitude <= 0){
+        player.altitude = 0;
+        player.yVel = 0;
+        player.onGround = true;
+        if(player.trickActive){
+          // successful trick -> boost and small camera shake
+          player.speed = Math.min(player.speed * CONFIG.car.trickBoostMult, CONFIG.car.maxSpeed * 1.8);
+          flashMsg('Trick Boost!', '#ffd166', 900);
+          player.trickActive = false;
+        }
+        player.glider = false;
+      }
+    }
+
+    // Apply boost pad detection (player prox to any boost pad center)
+    for(const pad of boostPads){
+      const c = getCenterFloat(pad.index);
+      const pos = playerWorldPos();
+      const d = Math.hypot(pos.x - c.x, pos.y - c.y);
+      if(d < 48 && player.onGround && !pad.used){ // allow reuse after small cooldown
+        player.speed = Math.min(player.speed + CONFIG.boostPad.power, CONFIG.car.maxSpeed * 1.8);
+        pad.used = true;
+        setTimeout(()=> pad.used = false, 900); // prevent immediate re-trigger
+        flashMsg('Boost Pad!', '#8be9ff', 650);
+        for(let i=0;i<14;i++) spawnParticle(pos.x + (Math.random()-0.5)*40, pos.y + (Math.random()-0.5)*18, (Math.random()-0.5)*120, (Math.random()-0.5)*40, 0.7 + Math.random()*0.4, '#8be9ff', 3);
+      }
+    }
+
+    // Item box pickup
+    for(const ib of itemBoxes){
+      if(!ib.taken){
+        const c = getCenterFloat(ib.index);
+        const pos = playerWorldPos();
+        const d = Math.hypot(pos.x - c.x, pos.y - c.y);
+        if(d < CONFIG.itemBoxes.spawnRadius){
+          // give a random item to player
+          giveRandomItem(player);
+          ib.taken = true;
+          setTimeout(()=> ib.taken = false, 9000); // respawn after 9s
+          flashMsg('Item Box!', '#f97316', 700);
+        }
+      }
+    }
+
+    // banana collision checks: if player or AI hits banana -> spin out (reduce speed)
+    for(let i=droppedBananas.length-1;i>=0;i--){
+      const b = droppedBananas[i];
+      // player collision
+      const pw = playerWorldPos();
+      if(Math.hypot(pw.x - b.x, pw.y - b.y) < b.radius + 8){
+        player.speed = player.speed * 0.45;
+        droppedBananas.splice(i,1);
+        flashMsg('Banana! You spun out', '#f59e0b', 800);
+        continue;
+      }
+      // AI collision
+      for(const a of ais){
+        const aw = aiWorldPos(a);
+        if(Math.hypot(aw.x - b.x, aw.y - b.y) < b.radius + 8){
+          a.speed = a.speed * 0.55;
+          droppedBananas.splice(i,1);
+          break;
+        }
+      }
+      // reduce life
+      b.life -= dt;
+      if(b.life <= 0) { droppedBananas.splice(i,1); }
+    }
+
+    // AI logic: simple centerline follower with speed target and small randomness + item usage
+    for(const a of ais){
+      // move forward
+      const tlen = tangentLengthAt(a.index);
+      const idxDelta = (a.speed * dt) / tlen;
+      const prev = a.index;
+      a.index = wrapIndex(a.index + idxDelta);
+
+      // small steering logic: if upcoming corner, slow a bit
+      // sample future tangent curvature approx by comparing directions a bit ahead
+      const cur = getCenterFloat(a.index);
+      const a2 = getCenterFloat(a.index + 4);
+      const dir1 = Math.atan2(a2.y - cur.y, a2.x - cur.x);
+      // align heading by setting lateral towards 0 slowly
+      a.lateral = lerp(a.lateral, 0, clamp(1.5 * dt,0,1));
+      // maintain speed target with variation
+      const targetSpeed = CONFIG.car.maxSpeed * (0.65 + 0.15 * Math.sin(a.index*0.02 + a.color.length));
+      a.speed = lerp(a.speed, targetSpeed, clamp(0.8 * dt,0,1));
+      // if item box ahead and no item, occasionally take it (simplified)
+      if(!a.hasItem && Math.random() < 0.0009) giveRandomItem(a);
+      // use item randomly if behind player
+      if(a.hasItem && Math.random() < 0.0015){
+        // if shell: target player
+        if(a.hasItem === 'shell'){
+          player.speed = Math.max(80, player.speed - 260);
+          a.hasItem = null;
+        } else if(a.hasItem === 'mushroom'){
+          a.speed = Math.min(a.speed + 260, CONFIG.car.maxSpeed * 1.6);
+          a.hasItem = null;
+        }
+      }
+    }
+
+    // lap detection crossing sfIndex
+    if(runActive){
+      const prevWrapped = wrapIndex(prevIndex);
+      const curWrapped = wrapIndex(player.index);
+      if(crossesIndex(prevWrapped, curWrapped, sfIndex)){
+        const nowMs = now();
+        const lapSec = (nowMs - lapStartTime) / 1000;
+        lapTimes.push(lapSec);
+        lapStartTime = nowMs;
+        lapCounterEl.textContent = `${lapTimes.length} / ${CONFIG.laps}`;
+        if(lapTimes.length >= CONFIG.laps){
+          // finish run
+          runActive = false;
+          startBtn.textContent = 'Start Run';
+          const total = lapTimes.reduce((a,b)=>a+b,0);
+          totalTimeEl.textContent = fmtTime(total);
+          if(!bestRecord || total < bestRecord.total){
+            bestRecord = { total, date: new Date().toISOString() };
+            try{ localStorage.setItem('coconut_best_3p_v2', JSON.stringify(bestRecord)); }catch(e){}
+            bestTimeEl.textContent = fmtTime(bestRecord.total);
+            flashMsg('New Personal Best!', '#16a34a', 1200);
+          }
+        } else flashMsg(`Lap ${lapTimes.length}`, '#f97316', 650);
+      }
+    }
+
+    // update particles
+    updateParticles(dt);
+
+    // camera follow: behind player world pos along angle
+    const pwp = playerWorldPos();
+    const camTargetX = pwp.x - Math.cos(player.angle) * 160;
+    const camTargetY = pwp.y - Math.sin(player.angle) * 120 - Math.max(0, player.altitude) * 0.3;
+    camera.x = lerp(camera.x, camTargetX, clamp(6*dt,0,1));
+    camera.y = lerp(camera.y, camTargetY, clamp(6*dt,0,1));
+    camera.zoom = lerp(camera.zoom, 1.03 - 0.12 * clamp(Math.abs(player.speed)/CONFIG.car.maxSpeed,0,1), clamp(2*dt,0,1));
+
+    // render
+    render();
+
+    requestAnimationFrame(update);
+  }
+
+  function crossesIndex(a,b,target){
+    // works with wrapped modular indices 0..L
+    const L = centerline.length;
+    // normalize into [0, L)
+    a = ((a%L)+L)%L; b = ((b%L)+L)%L; target = ((target%L)+L)%L;
+    if(a < b) return (a < target && target <= b);
+    // wrapped around
+    return (a < target && target < L) || (0 <= target && target <= b);
+  }
+
+  // update mini-turbo UI
+  function updateMTUI(){
+    const maxCharge = CONFIG.car.miniTurboLevels * 1.6;
+    const pct = clamp(player.driftCharge / maxCharge, 0, 1);
+    mtFill.style.width = `${Math.round(pct*100)}%`;
+    // decide label
+    let label = 'No Charge', color = '#999';
+    if(player.driftCharge >= 2.2){ label = 'Purple'; color = CONFIG.car.miniTurbo[2].color; }
+    else if(player.driftCharge >= 1.2){ label = 'Orange'; color = CONFIG.car.miniTurbo[1].color; }
+    else if(player.driftCharge >= 0.5){ label = 'Blue'; color = CONFIG.car.miniTurbo[0].color; }
+    mtLabel.textContent = label;
+    mtFill.style.background = label === 'No Charge' ? 'linear-gradient(90deg,#ddd,#bbb)' : `linear-gradient(90deg, ${color}, #ffffff33)`;
+  }
+
+  // -----------------------
+  // Rendering with camera transform (3rd person behind view)
+  // We translate canvas origin to center, then rotate world by -player.angle so the track rotates,
+  // and draw the world. The player car is drawn at a fixed screen position (slightly lower than center),
+  // giving the behind-the-car perspective feeling.
+  // -----------------------
+  function render(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // background sky/sea
+    const grd = ctx.createLinearGradient(0,0,0,canvas.height);
+    grd.addColorStop(0,'#eaf6ff'); grd.addColorStop(0.5,'#fff6ea'); grd.addColorStop(1,'#fffdf6');
+    ctx.fillStyle = grd; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // Save and apply camera transform: move center to canvas center, then translate by -camera, then rotate so player's forward is up screen
+    ctx.save();
+    ctx.translate(canvas.width/2, canvas.height/2);
+    ctx.rotate(-player.angle);
+    ctx.scale(camera.zoom, camera.zoom);
+    ctx.translate(-camera.x, -camera.y);
+
+    // draw distant ocean (static)
+    ctx.save();
+    ctx.fillStyle = '#96e0ff';
+    ctx.beginPath();
+    ctx.ellipse(centerX+480, centerY-320, 540, 260, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+
+    // draw track surface (left to right polygons)
+    ctx.save();
+    ctx.beginPath();
+    for(let i=0;i<track.length;i++){
+      const p = track[i];
+      ctx.lineTo(p.leftX, p.leftY);
+    }
+    for(let i=track.length-1;i>=0;i--){
+      const p = track[i];
+      ctx.lineTo(p.rightX, p.rightY);
+    }
+    ctx.closePath();
+    ctx.fillStyle = '#f3dca5';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#d9c497';
+    ctx.stroke();
+    ctx.restore();
+
+    // draw boost pads
+    for(const pad of boostPads){
+      const cp = centerline[pad.index % centerline.length];
+      ctx.save();
+      ctx.translate(cp.x, cp.y);
+      ctx.rotate(player.angle); // consistent orientation in world
+      ctx.fillStyle = '#8be9ff';
+      roundRect(ctx, -24, -8, 48, 16, 6, true, true);
+      ctx.restore();
+    }
+
+    // draw ramp
+    {
+      const r = centerline[rampIndex];
+      ctx.save();
+      ctx.translate(r.x, r.y);
+      ctx.fillStyle = '#d1a26b';
+      ctx.beginPath(); ctx.ellipse(0,0,86,22,0,0,Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+
+    // draw item boxes
+    for(const ib of itemBoxes){
+      const c = centerline[ib.index];
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      ctx.fillStyle = '#fff';
+      roundRect(ctx, -16, -14, 32, 28, 6, true, true);
+      ctx.fillStyle = '#f97316';
+      ctx.fillRect(-6, -4, 12, 8);
+      ctx.restore();
+    }
+
+    // draw dropped bananas
+    for(const b of droppedBananas){
+      ctx.save(); ctx.translate(b.x, b.y); ctx.fillStyle = '#f59e0b'; ctx.beginPath(); ctx.ellipse(0,0,8,6,0,0,Math.PI*2); ctx.fill(); ctx.restore();
+    }
+
+    // draw centerline (ghost)
+    ctx.save();
+    ctx.beginPath();
+    for(let i=0;i<centerline.length;i++){
+      const p = centerline[i];
+      if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.restore();
+
+    // draw AI racers
+    for(const a of ais){
+      const pos = aiWorldPos(a);
+      ctx.save();
+      ctx.translate(pos.x, pos.y - 2);
+      ctx.rotate(a.index ? Math.atan2(centerline[Math.floor(a.index+1)%centerline.length].y - centerline[Math.floor(a.index)%centerline.length].y, centerline[Math.floor(a.index+1)%centerline.length].x - centerline[Math.floor(a.index)%centerline.length].x) : 0);
+      // shadow
+      ctx.beginPath(); ctx.ellipse(0, 8, 16, 7, 0, 0, Math.PI*2); ctx.fillStyle = 'rgba(0,0,0,0.16)'; ctx.fill();
+      // body
+      ctx.fillStyle = a.color; roundRect(ctx, -20, -12, 40, 24, 6, true, true);
+      ctx.restore();
+    }
+
+    // draw player car at its world position (with altitude)
+    const ppos = playerWorldPos();
+    ctx.save();
+    ctx.translate(ppos.x, ppos.y - Math.max(0, player.altitude*0.35));
+    ctx.rotate(player.angle);
+    // shadow
+    ctx.beginPath(); ctx.ellipse(0, 12, 20 + Math.min(30, Math.abs(player.speed)/10), 8, 0, 0, Math.PI*2); ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.fill();
+    // car body
+    ctx.fillStyle = '#ef4444';
+    roundRect(ctx, -26, -14, 52, 28, 6, true, true);
+    ctx.fillStyle = 'rgba(255,255,255,0.6)'; roundRect(ctx, -12, -10, 24, 12, 3, true, false);
+    // small exhaust if boosting
+    if(now() < mtState.activeUntil || player.speed > CONFIG.car.maxSpeed * 1.05){
+      ctx.fillStyle = 'rgba(255,220,120,0.9)';
+      ctx.fillRect(-34, 0, 6, 6);
+    }
+    ctx.restore();
+
+    // restore camera transform
+    ctx.restore();
+
+    // draw HUD / UI elements in screen space
+    // mini-turbo bar already updated via DOM
+
+    // draw particles in screen space (convert world to screen)
+    for(const p of particles){
+      const s = worldToScreen(p.x, p.y, 0);
+      ctx.beginPath();
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = clamp(1 - p.age / p.life, 0, 1);
+      ctx.arc(s.x, s.y, p.size * (camera.zoom*0.9), 0, Math.PI*2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    // draw center cross where player's forward is (for orientation)
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    ctx.fillRect(canvas.width/2 - 2, canvas.height/2 - 2, 4, 4);
+    ctx.restore();
+
+    // draw dropped bananas in screen coords small overlay (already in world draw)
+    // draw item box text
+    if(player.hasItem){
+      itemBoxEl.textContent = player.hasItem[0].toUpperCase();
+    }
+
+    // draw timer text
+    ctx.save();
+    ctx.fillStyle = '#000000cc';
+    ctx.font = '14px Inter, Arial';
+    ctx.fillText(`Speed: ${Math.round(player.speed)}`, 12, 22);
+    ctx.restore();
+  }
+
+  // extend roundRect to context if not present
+  CanvasRenderingContext2D.prototype.roundRect = CanvasRenderingContext2D.prototype.roundRect || function(x,y,w,h,r){
+    if(r === undefined) r = 6;
+    this.beginPath();
+    this.moveTo(x + r, y);
+    this.arcTo(x + w, y, x + w, y + h, r);
+    this.arcTo(x + w, y + h, x, y + h, r);
+    this.arcTo(x, y + h, x, y, r);
+    this.arcTo(x, y, x + w, y, r);
+    this.closePath();
+    return this;
+  };
+
+  // -----------------------
+  // Start/reset handlers
+  // -----------------------
   startBtn.addEventListener('click', ()=>{
     if(!runActive){
       runActive = true;
@@ -741,14 +907,19 @@
     }
   });
   resetBtn.addEventListener('click', ()=>{
-    // reset player to start
-    player.trackPos = sfIndex + 1;
+    // place at start
+    player.index = sfIndex + 1;
     player.lateral = 0;
     player.speed = 0;
-    player.angle = Math.atan2(centerline[sfIndex].y - centerline[(sfIndex+1)%centerline.length].y, centerline[sfIndex].x - centerline[(sfIndex+1)%centerline.length].x);
-    player.yVel = 0;
+    // face along tangent
+    const st = getCenterFloat(player.index);
+    const st2 = getCenterFloat(player.index + 1);
+    player.angle = Math.atan2(st2.y - st.y, st2.x - st.x);
     player.altitude = 0;
+    player.yVel = 0;
     player.onGround = true;
+    player.drifting = false;
+    player.driftCharge = 0;
     runActive = false;
     startBtn.textContent = 'Start Run';
     lapTimes = [];
@@ -757,26 +928,58 @@
     totalTimeEl.textContent = fmtTime(0);
   });
   clearBestBtn.addEventListener('click', ()=>{
-    try{ localStorage.removeItem('coconut_best_3p'); }catch(e){}
-    bestTimeEl.textContent = '--:--.---';
+    try{ localStorage.removeItem('coconut_best_3p_v2'); }catch(e){}
     bestRecord = null;
+    bestTimeEl.textContent = '--:--.---';
     flashMsg('Cleared best', '#6b7280', 700);
   });
 
-  // kick off main loop
-  requestAnimationFrame(gameUpdate);
+  // item use binding Q (edge detection)
+  let prevKeys = { q:false };
+  window.addEventListener('keydown', (e)=> {
+    if(e.key.toLowerCase() === 'q' && !prevKeys.q) { usePlayerItem(); prevKeys.q = true; }
+  });
+  window.addEventListener('keyup', (e)=> { if(e.key.toLowerCase() === 'q') prevKeys.q = false; });
 
-  // small initial placement adjustments
-  player.trackPos = sfIndex + 1;
-  const startPt = getCenter(player.trackPos);
-  // face along track
-  const nextPt = getCenter(player.trackPos + 1);
-  player.angle = Math.atan2(nextPt.y - startPt.y, nextPt.x - startPt.x);
+  // -----------------------
+  // Run loop
+  // -----------------------
+  requestAnimationFrame(update);
 
-  // store a periodic autosave of best (already done when achieved)
+  // -----------------------
+  // Give keyboard shortcuts for debugging & tuning
+  // -----------------------
+  window.addEventListener('keydown', (e)=>{
+    if(e.key === '1') { player.speed += 140; flashMsg('Debug boost +', '#8be9ff', 400); }
+    if(e.key === '2') { giveRandomItem(player); flashMsg('Debug item', '#f97316', 400); }
+  });
 
-  // end closure
-})();
+  // -----------------------
+  // Utilities used earlier
+  // -----------------------
+  function spawnParticle(x,y,vx,vy,life,color,size=3){ particles.push({x,y,vx,vy,life,age:0,color,size}); }
+  function giveRandomItem(target){
+    const it = ITEM_POOL[Math.floor(Math.random()*ITEM_POOL.length)];
+    target.hasItem = it;
+    if(target === player) itemBoxEl.textContent = it[0].toUpperCase();
+  }
+  function usePlayerItem(){ /* implemented above (duplicated for closure safety) */ }
+  // we defined usePlayerItem earlier, but ensure function reference exists here:
+  // (no-op placeholder, real implementation is above)
+  // -----------------------
+
+  // small initial placement
+  (function initPosition(){
+    player.index = sfIndex + 1;
+    const st = getCenterFloat(player.index);
+    const st2 = getCenterFloat(player.index + 1);
+    player.angle = Math.atan2(st2.y - st.y, st2.x - st.x);
+  })();
+
+  // expose some globals for debugging
+  window._CK = { player, ais, centerline, track, spawnParticle };
+
+})(); // end closure
 </script>
 </body>
 </html>
